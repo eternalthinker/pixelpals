@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="john horton conway, game of life, cellular automaton, life without death, highlife, maze, seeds, torus" />
+    <meta name="description" content="Conway's Game of Life and other cellular automata" />
+    <meta name="author" content="Rahul Anand <eternalthinker>" />
+    <meta name="copyright" content="Apache 2.0" />
+    <title>Game of Life</title>
+    
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/flat-ui.min.css">
+    <link rel="stylesheet" href="css/fontello.css">
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/flat-ui.min.js"></script>
+    <script src="rle.js"></script>
+    <script src="life.js"></script>
+</head>
+
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation" id="main-navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">Game of Life</a>
+        <p class="navbar-text hidden-sm hidden-xs">A cellular automata simulator</p>
+        <p class="navbar-text visible-sm-inline-block hidden-xs">Cellular automata fun!</p>
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-navigation-collapse-content">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <div class="collapse navbar-collapse navbar-right" id="main-navigation-collapse-content">
+        <ul class="nav navbar-nav">
+          <li><a href="#about">?</a></li>
+          <li><a href="http://eternal-thinker.com/">Home</a></li>
+          <li><a href="http://github.com/eternalthinker">Github</a></li>
+          <li><a href="https://github.com/eternalthinker/gameoflife">Source</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="row">
+      <!-- Canvas and info -->
+      <div class="col-lg-8 col-md-12 col-sm-12">
+        <div class="row">
+          <div class="col-xs-12">
+            <!-- Extra 2px padding in container below, to account for border overlay -->
+            <div id="canvas-container" class="center-block" style="position:relative; height:602px; width:752px; border:1px dotted #CCCCCC;">
+              <canvas id="grid" height="600" width="750" style="position:absolute; top:0; left:0; z-index:2;"></canvas>
+              <canvas id="world" height="600" width="750" style="position:absolute; top:0; left:0; z-index:1;"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="center-block" style="width:750px;">
+              <span class="label label-info">Generation: <span id="generation"></span></span>
+              <span class="label label-info">Popultion: <span id="population"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End of Canvas and info -->
+
+      <!-- Controls and Tools -->
+      <div class="text-left col-lg-4 col-lg-offset-0 col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">
+        <div class="row">
+          <div class="col-xs-12" style="margin-top:10px;">
+            <button type="button" id="run" class="btn btn-default btn-success"><span class="fui-play"></span></button>
+            <button type="button" id="step" class="btn btn-default btn-primary"><span class="fui-arrow-right"></span></button>
+            <button type="button" id="pause" class="btn btn-default btn-warning mrl" disabled><span class="fui-pause"></span></button>
+            
+            <div class="btn-group" role="toolbar" aria-label="toolbar">
+            <button type="button" id="pencil" class="btn btn-default btn-info" disabled>
+              <span class="icon-pencil"></span>
+            </button>
+            <button type="button" id="eraser" class="btn btn-default btn-inverse">
+              <span class="icon-eraser"></span>
+            </button>
+            <button type="button" id="clear" class="btn btn-default btn-danger">
+              <span class="icon-clear"></span>
+            </button>
+            </div>
+            <hr/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xs-12">
+            <label style="margin-top:0px;">Speed</label>
+            <div id="slider" class="ui-slider"></div>
+            
+            <label style="margin-top:0px;" class="mrdl">Grid</label>
+            <input type="checkbox" checked data-toggle="switch" name="default-switch-colors" data-on-color="primary" data-off-color="default" id="grid-switch"/>
+
+            <label style="margin-top:0px;" class="mll">Trace</label>
+            <input type="checkbox" checked data-toggle="switch" name="default-switch-colors" data-on-color="primary" data-off-color="default" id="trace-switch" />
+
+            <button type="button" id="palette" class="btn btn-default btn-primary btn-sm mll">Color <span class="fui-star"></span></button>
+            <hr/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xs-12">
+            <label style="margin-top:0px;" class="mrl">Life forms</label>
+            <select class="form-control select select-primary select-block" id="lifeforms">
+              <option value="NONE">Select a lifeform to load</option>
+              <optgroup label="Game of Life">
+                <option value="GOSPER_GLIDER_GUN">Gosper Glider Gun</option>
+                <option value="SNAIL">Snail</option>
+                <option value="DRAGON">Dragon</option>
+                <option value="WEEKENDER_TAGALONG">Weekender tagalong</option>
+                <option value="QUEEN_BEE_LOOP">Queen bee Loop</option>
+                <option value="GLIDERS_BY_THE_DOZEN">Gliders by the dozen</option>
+              </optgroup>
+              <optgroup label="HighLife">
+                <option value="REPLICATOR">Replicator</option>
+                <option value="BOMBER_PREDECESSOR">Bomber Predecessor</option>
+              </optgroup>
+            </select>
+            <hr/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="row">
+              <div class="col-xs-12" style="margin-bottom:5px;">
+                <label style="margin-top:0px;" class="mrl">Game Rules</label>
+                <select class="form-control select select-primary select-block" id="rules">
+                  <option value="GAME_OF_LIFE" selected>Game of Life</option>
+                  <option value="LIFE_WITHOUT_DEATH">Life without Death</option>
+                  <option value="HIGHLIFE">HighLife</option>
+                  <option value="MAZE">Maze</option>
+                  <option value="SEEDS">Seeds</option>
+                  <option value="CUSTOM">Custom</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-6 col-md-6 col-sm-6">
+                <div class="input-group">
+                  <span class="input-group-addon input-sm">B</span>
+                  <input type="text" id="b-rule" class="form-control input-sm" placeholder="None" value="3" disabled />
+                </div>
+              </div>
+              <div class="col-lg-6 col-md-6 col-sm-6">
+                <div class="input-group">
+                  <span class="input-group-addon input-sm">S</span>
+                  <input type="text" id="s-rule" class="form-control input-sm" placeholder="None" value="23" disabled />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div> <!-- End of Controls and Tools -->
+      
+    </div> <!-- END core content row -->
+
+    <div class="row"> <!-- About row -->
+      <div class="col-md-12">
+      <article id="about">
+        <section>
+          <h3>About</h3>
+          <p>
+            <em>Game of Life</em> is a cellular automaton devised by the British Mathematician John Horton Conway in 1970. 
+            <small><a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life" target="_blank">[Wikipedia link]</a></small><br>
+          </p>
+          <p>
+            Here the world consists of a grid of cells, with some of them being <em>alive</em>. 
+            A dead cell comes alive, or is <strong>B</strong>orn, if it has exactly 3 immediate live neighbours. Similarly, a live cell survives to the next generation, or
+            <strong>S</strong>tay alive, if it has 2 to 3 neighbours; It will die if the neighbour count in any lesser or greater. This is abbreviated as the 
+            <strong>B</strong>3/<strong>S</strong>23 rule.<br>
+          </p>
+          <p>
+            The game starts with an initial configuration of live cells, and evolves into different patterns in subsequent generations according to these simple rules.
+            Despite the short rules, the evolution of an initial pattern can be surprising.<br>
+            There are variations of <em>Game of Life</em>, created by changes in the B/S rule. Seemingly small changes in the rule can give rise to an evolution pattern
+            that is drastically different. There is the charmingly structured <em>Maze</em> and the explosive <em>Seeds</em>. For examples, check out other game rules in the above interface.
+          </p>
+        </section>
+
+        <section>
+          <h4>Life forms</h4>
+          <p>
+            There are several naturally occuring and cleverly engineered patterns disovered in different cellular automata rules. Static life forms which do not move, yet 
+            do not die out, life forms which are static yet <em>pulse</em> in their current position with various intervals, and Spaceships which are patterns which keep moving in one direction, not unlike what is imagined of spaceships.<br>
+            Check some examples in the above interface. Note that, a pattern shows its guaranteed behaviour only in its native set of rules.
+          </p>
+        </section>
+
+        <section>
+          <h4>Implementation Details</h4>
+          <p>
+            In the original definition, a cellular automaton consists of an infinite grid of cells, growing in all directions. Above implementation uses a toroidal grid,
+            meaning the top and bottom are virtually stitched together, and similarly the left and right sides. So a cell which moves past the right end, continues from the 
+            beginning of left end. This enables an infinite world of sorts, except that moving cells can collide with existing cells unlike an infinite universe.
+          </p>
+          <p>
+            The implementation also uses a naive implementation of rules. More optimized algorithms for <em>Game of Life</em> include Listlife and Hashlife.<br>
+            <em>PS: Turn off Trace (colored trail) in the interface if a crowded grid is making the simulation slower.</em>
+          </p>
+        </section>
+
+      </article>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:40px"></div>
+    </div> <!-- END main container -->
+
+</body>  
+  
+</html>

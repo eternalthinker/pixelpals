@@ -1,0 +1,15 @@
+
+body { 
+    padding-top: 70px; 
+    min-width: 768px;
+}
+
+/* Fix for ghost bootstrapSwitch in Flat UI in Chrome (weird) */
+.navbar-fixed-top,
+.navbar-fixed-bottom {
+    border-radius: 1px;
+}
+
+/* Generated with TWBS Color */
+
+/* End of Generated with TWBS Color */
