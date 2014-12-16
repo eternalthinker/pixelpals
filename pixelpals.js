@@ -1,7 +1,7 @@
 /*
- * Javascript implementation of Conway's Game of Life and other cellular automata
+ * Web based public collaborative pixel canvas 
  *
- * Author: Rahul Anand [ eternalthinker.co ], Nov 2014
+ * Author: Rahul Anand [ eternalthinker.co ], Dec 2014
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,23 +11,139 @@
 
 $(document).ready(function() {
 
-    /*
-        Tool:
-            - Pencil
-            - Eraser
-            - Color Picker
+    /* ================== Tool classes ================ */
+    function Tool (pixelCanvas) {
+        this.pixelCanvas = pixelCanvas;
+        this.drawing = false;
+        this.dragging = false;
+    }
 
-        PixelCanvas:
-            - grid of cells (color)
-            - setPixel (x, y, color)
-            - getPixel (x, y)
+    Tool.prototype.onMouseDown = function (event) {
+        event.originalEvent.preventDefault(); // Chrome drag text cursor fix
+        this.drawing = true;
+    }
 
-        Ui:
-            - tool buttons
-            - pixel canvas
-                * tools
-        
-    */
+    Tool.prototype.onMouseUp = function (event) {
+        if (this.drawing) {
+            this.drawing = false;
+            if (this.dragging) { // No mouse up action if mouse was being dragged
+                this.dragging = false;
+            }
+            // else click draw action
+        }
+    }
+
+    Tool.prototype.onMouseMove = function (event) {
+        if (this.drawing) {
+            this.dragging = true;
+        }
+        // else drag draw action
+    }
+
+    Tool.prototype.onMouseOut = function (event) {
+        this.dragging = false;
+    }
+
+    /* ----------------------- Pencil -----------------------*/
+    function Pencil (pixelCanvas) {
+        Tool.call(this, pixelCanvas);
+        this.color = 'black';
+    }
+    Pencil.prototype = Object.create(Tool.prototype);
+
+    Pencil.prototype.onMouseUp = function (event) {
+        if (this.drawing) {
+            this.drawing = false;
+            if (this.dragging) { // No mouse up action if mouse was being dragged
+                this.dragging = false;
+            }
+            else {
+                this.pixelCanvas.setPixel(event.x, event.y, this.color);
+            }
+        }
+    }
+
+    Pencil.prototype.onMouseMove = function (event) {
+        if (this.drawing) {
+            this.dragging = true;
+            this.pixelCanvas.setPixel(event.x, event.y, this.color);
+        }
+    }
+
+    Pencil.prototype.setColor = function (color) {
+        this.color = color;
+    }
+
+    /* ----------------------- Picker -----------------------*/
+    function Picker (pixelCanvas) {
+        Tool.call(this, pixelCanvas);
+    }
+    Picker.prototype = Object.create(Tool.prototype);
+
+    Tool.prototype.onMouseUp = function (event) {
+        if (this.drawing) {
+            this.drawing = false;
+            if (this.dragging) { // No mouse up action if mouse was being dragged
+                this.dragging = false;
+            }
+            else {
+                this.pixelCanvas.setToolColorFrom(event.x, event.y);
+            }
+        }
+    }
+    /* ================== End of Tool classes ================ */
+
+
+    /* ================== PixelCanvas class ================ */
+    function PixelCanvas (rows, cols, pixelSize, canvasCtx, ui) {
+        this.rows = rows;
+        this.cols = cols;
+        this.pixelSize = pixelSize;
+        this.canvasCtx = canvasCtx;
+        this.ui = ui;
+
+        this.tools = {
+            pencil: new Pencil(this);
+            eraser: new Pencil(this);
+            picker: new Picker(this);
+        }
+        this.tools.eraser.setColor('white');
+        this.curTool = this.tools.pencil;
+        this.canvasData = []; // Internal info storage for canvas pixels
+
+        // Actions
+        for (var r = 0; r < this.rows; ++r) {
+            for (var c = 0; c < this.cols; ++c) {
+                this.canvasData[y*this.cols + x] = 'white';
+            }
+        }
+    }
+
+    PixelCanvas.prototype.setPixel = function (x, y, color) {
+        this.canvasData[y*this.cols + x] = color;
+    }
+
+    PixelCanvas.prototype.getPixel = function (x, y) {
+        return this.canvasData[y*this.cols + x];
+    }
+
+    PixelCanvas.prototype.setCurToolColorFrom = function (x, y) {
+        this.curTool.setColor( this.getPixel(x, y) );
+    }
+
+    PixelCanvas.prototype.setTool = function (toolname) {
+        this.curTool = this.tools[toolname];
+    }
+    /* ==================  End of class ================ */
+
+
+    /* ================== Ui class ================ */
+    function Ui () {
+
+    }
+    /* ================== End of Ui class ================ */
+
+    
 
 
     /* ================== Ui class ================ */
