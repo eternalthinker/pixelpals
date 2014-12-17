@@ -19,7 +19,6 @@ $(document).ready(function() {
     }
 
     Tool.prototype.onMouseDown = function (event) {
-        event.originalEvent.preventDefault(); // Chrome drag text cursor fix
         this.drawing = true;
     }
 
@@ -80,14 +79,14 @@ $(document).ready(function() {
     }
     Picker.prototype = Object.create(Tool.prototype);
 
-    Tool.prototype.onMouseUp = function (event) {
+    Picker.prototype.onMouseUp = function (event) {
         if (this.drawing) {
             this.drawing = false;
             if (this.dragging) { // No mouse up action if mouse was being dragged
                 this.dragging = false;
             }
             else {
-                this.pixelCanvas.setToolColorFrom(event.x, event.y);
+                this.pixelCanvas.setColorFrom(event.x, event.y);
             }
         }
     }
@@ -103,50 +102,154 @@ $(document).ready(function() {
         this.ui = ui;
 
         this.tools = {
-            pencil: new Pencil(this);
-            eraser: new Pencil(this);
-            picker: new Picker(this);
-        }
-        this.tools.eraser.setColor('white');
+            pencil: new Pencil(this),
+            picker: new Picker(this)
+        };
         this.curTool = this.tools.pencil;
+        this.auxTool = null;
+        this.color = 'black';
         this.canvasData = []; // Internal info storage for canvas pixels
 
         // Actions
         for (var r = 0; r < this.rows; ++r) {
             for (var c = 0; c < this.cols; ++c) {
-                this.canvasData[y*this.cols + x] = 'white';
+                this.canvasData[r*this.cols + c] = 'white';
             }
         }
     }
 
     PixelCanvas.prototype.setPixel = function (x, y, color) {
         this.canvasData[y*this.cols + x] = color;
+        this.canvasCtx.fillStyle = color;
+        this.canvasCtx.beginPath();
+        this.canvasCtx.rect(x*this.pixelSize, y*this.pixelSize, this.pixelSize, this.pixelSize);
+        this.canvasCtx.fill();
     }
 
     PixelCanvas.prototype.getPixel = function (x, y) {
         return this.canvasData[y*this.cols + x];
     }
 
-    PixelCanvas.prototype.setCurToolColorFrom = function (x, y) {
-        this.curTool.setColor( this.getPixel(x, y) );
+    PixelCanvas.prototype.setColorFrom = function (x, y) {
+        (this.curTool).setColor( this.getPixel(x, y) );
     }
 
-    PixelCanvas.prototype.setTool = function (toolname) {
-        this.curTool = this.tools[toolname];
+    PixelCanvas.prototype.setAuxTool = function (toolname) {
+        this.auxTool = this.tools[toolname];
+    }
+
+    PixelCanvas.prototype.onMouseDown = function (event) {
+        (this.auxTool || this.curTool).onMouseDown(event);
+    }
+
+    PixelCanvas.prototype.onMouseUp = function (event) {
+        (this.auxTool || this.curTool).onMouseUp(event);
+    }
+
+    PixelCanvas.prototype.onMouseMove = function (event) {
+        (this.auxTool || this.curTool).onMouseMove(event);
+    }
+
+    PixelCanvas.prototype.onMouseOut = function (event) {
+        (this.auxTool || this.curTool).onMouseOut(event);
     }
     /* ==================  End of class ================ */
 
 
     /* ================== Ui class ================ */
     function Ui () {
+        // Collect UI components
+        this.$pencil_btn = $('#pencil');
+        this.$picker_btn = $('#picker');
+        this.$pixel_cnvs = $('#pixelcanvas');
+        this.$grid_cnvs = $('#grid');
+        this.pixel_ctx = this.$pixel_cnvs.get(0).getContext('2d');
+        this.grid_ctx = this.$grid_cnvs.get(0).getContext('2d');
+        this.$grid_chk = $('#grid-switch');
 
+        // UI component handlers
+        this.$grid_chk.bootstrapSwitch('state', true);
+        this.$grid_chk.on('switchChange.bootstrapSwitch', $.proxy(function (event, state) {
+          if (state) {
+            this.$grid_cnvs.show();
+          } else {
+            this.$grid_cnvs.hide();
+          }
+        }, this));
+
+        // Mouse handlers
+        this.$grid_cnvs.mousedown($.proxy(function (event) { this.onMouseDown(event); }, this));
+        this.$grid_cnvs.mouseup($.proxy(function (event) { this.onMouseUp(event); }, this));
+        this.$grid_cnvs.mousemove($.proxy(function (event) { this.onMouseMove(event); }, this));
+        this.$grid_cnvs.mouseout($.proxy(function (event) { this.onMouseOut(event); }, this));
+        this.$pixel_cnvs.mousedown($.proxy(function (event) { this.onMouseDown(event); }, this));
+        this.$pixel_cnvs.mouseup($.proxy(function (event) { this.onMouseUp(event); }, this));
+        this.$pixel_cnvs.mousemove($.proxy(function (event) { this.onMouseMove(event); }, this));
+        this.$pixel_cnvs.mouseout($.proxy(function (event) { this.onMouseOut(event); }, this));
+
+        // Init vars
+        this.w = 750;
+        this.h = 600;
+        this.pixelSize = 5;
+
+        // Actions
+        this.paintGrid();
+        this.pixelCanvas = new PixelCanvas(this.h/this.pixelSize, this.w/this.pixelSize, this.pixelSize, this.pixel_ctx, this);
+    }
+
+    Ui.prototype.paintGrid = function () {
+        this.grid_ctx.fillStyle = 'white';
+        this.grid_ctx.strokeStyle = '#CCCCCC';
+        this.grid_ctx.lineWidth = 0.5;
+        /* Background color
+        this.grid_ctx.beginPath();
+        this.grid_ctx.rect(0, 0, this.w, this.h); 
+        this.grid_ctx.fill(); */
+        for (var x = 0; x <= this.w; x += this.pixelSize) {
+            this.grid_ctx.beginPath();
+            this.grid_ctx.moveTo(x, 0);
+            this.grid_ctx.lineTo(x, this.h);
+            this.grid_ctx.stroke();
+        }
+        for (var y = 0; y <= this.h; y += this.pixelSize) {
+            this.grid_ctx.beginPath();
+            this.grid_ctx.moveTo(0, y);
+            this.grid_ctx.lineTo(this.w, y);
+            this.grid_ctx.stroke();
+        }
+    }
+
+    Ui.prototype.getPixelpoint = function (event) {
+        coords = this.$pixel_cnvs.get(0).relMouseCoords (event)
+        //return { x: Math.floor(coords.x/this.cellSize), y: Math.floor(coords.y/this.cellSize) };
+        // Fine tuning pixel drawing at edges: (10,10) -> (1,1) for cellSize=5
+        return { x: Math.floor(coords.x/this.pixelSize) - (coords.x%this.pixelSize?0:1), 
+                 y: Math.floor(coords.y/this.pixelSize) - (coords.y%this.pixelSize?0:1) 
+               };
+    }
+
+    Ui.prototype.onMouseDown = function (event) {
+        event.originalEvent.preventDefault(); // Chrome drag text cursor fix
+        this.pixelCanvas.onMouseDown(this.getPixelpoint(event));
+    }
+
+    Ui.prototype.onMouseUp = function (event) {
+        this.pixelCanvas.onMouseUp(this.getPixelpoint(event));
+    }
+
+    Ui.prototype.onMouseMove = function (event) {
+        this.pixelCanvas.onMouseMove(this.getPixelpoint(event));
+    }
+
+    Ui.prototype.onMouseOut = function (event) {
+        this.pixelCanvas.onMouseOut(this.getPixelpoint(event));
     }
     /* ================== End of Ui class ================ */
 
     
 
 
-    /* ================== Ui class ================ */
+    /* ================== Ui class ================
     function Ui (Rules, Lifeforms, Palettes) {
         this.Rules = Rules;
         this.Lifeforms = Lifeforms;
@@ -526,36 +629,10 @@ $(document).ready(function() {
             this.grid_ui.stroke();
         }
     }
-    /* ================== End of Ui class ================ */
+   ================== End of Ui class ================ */
 
 
     /* ================== Utilities ================ */
-    // Compatibility fix
-    if (String.prototype.repeat === undefined) {
-        String.prototype.repeat = function (num)
-        {
-            return new Array(num + 1).join(this);
-        }
-    }
-
-    // Add segments to a slider
-    $.fn.addSliderSegments = function (amount, orientation) {
-        return this.each(function () {
-            if (orientation == "vertical") {
-              var output = ''
-              , i;
-              for (i = 1; i <= amount - 2; i++) {
-                output += '<div class="ui-slider-segment" style="top:' + 100 / (amount - 1) * i + '%;"></div>';
-            };
-            $(this).prepend(output);
-            } else {
-                var segmentGap = 100 / (amount - 1) + "%";
-                var segment = '<div class="ui-slider-segment" style="margin-left: ' + segmentGap + ';"></div>';
-                $(this).prepend(segment.repeat(amount - 2));
-            }
-        });
-    };
-
     // Retrieve mouse coordinates relative to the canvas element
     function relMouseCoords(event){
         var totalOffsetX = 0;
@@ -578,9 +655,6 @@ $(document).ready(function() {
     HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
     /* ================== End of Utilities ================ */
 
-    var ui;
-    $(document).ajaxStop(function() {
-        ui = new Ui(Rules, Lifeforms, Palettes);
-    });
+    var ui = new Ui();
 
 });
