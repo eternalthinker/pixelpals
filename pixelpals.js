@@ -86,7 +86,7 @@ $(document).ready(function() {
             }
             else {
                 this.pixelCanvas.setColorFrom(event.x, event.y);
-                this.pixelCanvas.setTool('pencil');
+                this.pixelCanvas.setToolUp('pencil');
             }
         }
     }
@@ -133,6 +133,11 @@ $(document).ready(function() {
         this.curTool = this.tools[toolname];
     }
 
+    PixelCanvas.prototype.setToolUp = function (toolname) {
+        this.ui.setTool(toolname);
+        this.setTool(toolname);
+    }
+
     PixelCanvas.prototype.setColorFrom = function (x, y) {
         this.setColor( this.getPixel(x, y) );
     }
@@ -162,8 +167,6 @@ $(document).ready(function() {
     /* ================== Ui class ================ */
     function Ui () {
         // Collect UI components
-        this.$pencil_btn = $('#pencil');
-        this.$picker_btn = $('#picker');
         this.$pixel_cnvs = $('#pixelcanvas');
         this.$grid_cnvs = $('#grid');
         this.pixel_ctx = this.$pixel_cnvs.get(0).getContext('2d');
@@ -181,7 +184,9 @@ $(document).ready(function() {
         }, this));
 
         $('.tool').click($.proxy(function (event) {
-            this.pixelCanvas.setTool(event.target.id);
+            var toolname = event.target.id;
+            this.setTool(toolname);
+            this.pixelCanvas.setTool(toolname);
         }, this));
 
         // Mouse handlers
@@ -198,11 +203,20 @@ $(document).ready(function() {
         this.w = 750;
         this.h = 600;
         this.pixelSize = 5;
+        this.curToolName = 'pencil';
 
         // Actions
+        $('#picker').prop('disabled', false);
+        this.setTool(this.curToolName);
         this.paintGrid();
         this.pixelCanvas = new PixelCanvas(this.h/this.pixelSize, this.w/this.pixelSize, this.pixelSize, this.pixel_ctx, this);
     }
+
+    Ui.prototype.setTool = function(toolname) {
+        $('#' + this.curToolName).prop('disabled', false);
+        this.curToolName = toolname;
+        $('#' + this.curToolName).prop('disabled', true);
+    };
 
     Ui.prototype.paintGrid = function () {
         this.grid_ctx.fillStyle = 'white';
