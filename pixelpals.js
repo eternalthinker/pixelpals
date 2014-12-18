@@ -85,8 +85,7 @@ $(document).ready(function() {
                 this.dragging = false;
             }
             else {
-                this.pixelCanvas.setColorFrom(event.x, event.y);
-                this.pixelCanvas.setToolUp('pencil');
+                this.pixelCanvas.processColorPick(event);
             }
         }
     }
@@ -106,13 +105,13 @@ $(document).ready(function() {
             picker: new Picker(this)
         };
         this.curTool = this.tools.pencil;
-        this.color = 'black';
+        this.color = '#000000';
         this.canvasData = []; // Internal info storage for canvas pixels
 
         // Actions
         for (var r = 0; r < this.rows; ++r) {
             for (var c = 0; c < this.cols; ++c) {
-                this.canvasData[r*this.cols + c] = 'white';
+                this.canvasData[r*this.cols + c] = '#FFFFFF';
             }
         }
     }
@@ -133,9 +132,11 @@ $(document).ready(function() {
         this.curTool = this.tools[toolname];
     }
 
-    PixelCanvas.prototype.setToolUp = function (toolname) {
-        this.ui.setTool(toolname);
-        this.setTool(toolname);
+    PixelCanvas.prototype.processColorPick = function (event) {
+        this.setColorFrom(event.x, event.y);
+        this.ui.setColor(this.color);
+        this.setTool('pencil');
+        this.ui.setTool('pencil');
     }
 
     PixelCanvas.prototype.setColorFrom = function (x, y) {
@@ -172,6 +173,7 @@ $(document).ready(function() {
         this.pixel_ctx = this.$pixel_cnvs.get(0).getContext('2d');
         this.grid_ctx = this.$grid_cnvs.get(0).getContext('2d');
         this.$grid_chk = $('#grid-switch');
+        this.$colorpicker_ui = $('#colorpicker');
 
         // UI component handlers
         this.$grid_chk.bootstrapSwitch('state', true);
@@ -188,6 +190,31 @@ $(document).ready(function() {
             this.setTool(toolname);
             this.pixelCanvas.setTool(toolname);
         }, this));
+
+        this.$colorpicker_ui.colorPicker({
+            pickerDefault: "000000",
+            transparency: false,
+            showHexField: true,
+            onColorChange: $.proxy(function (id, newValue) {
+                this.pixelCanvas.setColor(newValue);
+            }, this),
+            colors: ["E6E6FA", "D8BFD8", "DDA0DD", "EE82EE", "DA70D6", "FF00FF", "FF00FF", "BA55D3", "9370DB", "8A2BE2", 
+                    "9400D3", "9932CC", "8B008B", "800080", "4B0082", "483D8B", "6A5ACD", "7B68EE", "FFC0CB", "FFB6C1", 
+                    "FF69B4", "FF1493", "DB7093", "C71585", "FFA07A", "FA8072", "E9967A", "F08080", "CD5C5C", "DC143C", 
+                    "B22222", "8B0000", "FF0000", "FF4500", "FF6347", "FF7F50", "FF8C00", "FFA500", "FFFF00", "FFFFE0", 
+                    "FFFACD", "FAFAD2", "FFEFD5", "FFE4B5", "FFDAB9", "EEE8AA", "F0E68C", "BDB76B", "FFD700", "FFF8DC", 
+                    "FFEBCD", "FFE4C4", "FFDEAD", "F5DEB3", "DEB887", "D2B48C", "BC8F8F", "F4A460", "DAA520", "B8860B", 
+                    "CD853F", "D2691E", "8B4513", "A0522D", "A52A2A", "800000", "556B2F", "808000", "6B8E23", "9ACD32", 
+                    "32CD32", "00FF00", "7CFC00", "7FFF00", "ADFF2F", "00FF7F", "00FA9A", "90EE90", "98FB98", "8FBC8F", 
+                    "3CB371", "2E8B57", "228B22", "008000", "006400", "66CDAA", "00FFFF", "00FFFF", "E0FFFF", "AFEEEE", 
+                    "7FFFD4", "40E0D0", "48D1CC", "00CED1", "20B2AA", "5F9EA0", "008B8B", "008080", "B0C4DE", "B0E0E6", 
+                    "ADD8E6", "87CEEB", "87CEFA", "00BFFF", "1E90FF", "6495ED", "4682B4", "4169E1", "0000FF", "0000CD", 
+                    "00008B", "000080", "191970", "FFFFFF", "FFFAFA", "F0FFF0", "F5FFFA", "F0FFFF", "F0F8FF", "F8F8FF", 
+                    "F5F5F5", "FFF5EE", "F5F5DC", "FDF5E6", "FFFAF0", "FFFFF0", "FAEBD7", "FAF0E6", "FFF0F5", "FFE4E1", 
+                    "DCDCDC", "D3D3D3", "C0C0C0", "A9A9A9", "808080", "696969", "778899", "708090", "2F4F4F", "000000" 
+                    ]
+        });
+        $('.colorPicker-picker').addClass('btn btn-default');
 
         // Mouse handlers
         this.$grid_cnvs.mousedown($.proxy(function (event) { this.onMouseDown(event); }, this));
@@ -212,14 +239,19 @@ $(document).ready(function() {
         this.pixelCanvas = new PixelCanvas(this.h/this.pixelSize, this.w/this.pixelSize, this.pixelSize, this.pixel_ctx, this);
     }
 
-    Ui.prototype.setTool = function(toolname) {
+    Ui.prototype.setTool = function (toolname) {
         $('#' + this.curToolName).prop('disabled', false);
         this.curToolName = toolname;
         $('#' + this.curToolName).prop('disabled', true);
     };
 
+    Ui.prototype.setColor = function (color) {
+        this.$colorpicker_ui.val(color);
+        this.$colorpicker_ui.change();
+    }
+
     Ui.prototype.paintGrid = function () {
-        this.grid_ctx.fillStyle = 'white';
+        this.grid_ctx.fillStyle = '#FFFFFF';
         this.grid_ctx.strokeStyle = '#CCCCCC';
         this.grid_ctx.lineWidth = 0.5;
         /* Background color
