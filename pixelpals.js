@@ -46,7 +46,6 @@ $(document).ready(function() {
     /* ----------------------- Pencil -----------------------*/
     function Pencil (pixelCanvas) {
         Tool.call(this, pixelCanvas);
-        this.color = 'black';
     }
     Pencil.prototype = Object.create(Tool.prototype);
 
@@ -57,7 +56,7 @@ $(document).ready(function() {
                 this.dragging = false;
             }
             else {
-                this.pixelCanvas.setPixel(event.x, event.y, this.color);
+                this.pixelCanvas.setPixel(event.x, event.y);
             }
         }
     }
@@ -65,7 +64,7 @@ $(document).ready(function() {
     Pencil.prototype.onMouseMove = function (event) {
         if (this.drawing) {
             this.dragging = true;
-            this.pixelCanvas.setPixel(event.x, event.y, this.color);
+            this.pixelCanvas.setPixel(event.x, event.y);
         }
     }
 
@@ -87,6 +86,7 @@ $(document).ready(function() {
             }
             else {
                 this.pixelCanvas.setColorFrom(event.x, event.y);
+                this.pixelCanvas.setTool('pencil');
             }
         }
     }
@@ -106,7 +106,6 @@ $(document).ready(function() {
             picker: new Picker(this)
         };
         this.curTool = this.tools.pencil;
-        this.auxTool = null;
         this.color = 'black';
         this.canvasData = []; // Internal info storage for canvas pixels
 
@@ -118,9 +117,9 @@ $(document).ready(function() {
         }
     }
 
-    PixelCanvas.prototype.setPixel = function (x, y, color) {
-        this.canvasData[y*this.cols + x] = color;
-        this.canvasCtx.fillStyle = color;
+    PixelCanvas.prototype.setPixel = function (x, y) {
+        this.canvasData[y*this.cols + x] = this.color;
+        this.canvasCtx.fillStyle = this.color;
         this.canvasCtx.beginPath();
         this.canvasCtx.rect(x*this.pixelSize, y*this.pixelSize, this.pixelSize, this.pixelSize);
         this.canvasCtx.fill();
@@ -130,28 +129,32 @@ $(document).ready(function() {
         return this.canvasData[y*this.cols + x];
     }
 
-    PixelCanvas.prototype.setColorFrom = function (x, y) {
-        (this.curTool).setColor( this.getPixel(x, y) );
+    PixelCanvas.prototype.setTool = function (toolname) {
+        this.curTool = this.tools[toolname];
     }
 
-    PixelCanvas.prototype.setAuxTool = function (toolname) {
-        this.auxTool = this.tools[toolname];
+    PixelCanvas.prototype.setColorFrom = function (x, y) {
+        this.setColor( this.getPixel(x, y) );
+    }
+
+    PixelCanvas.prototype.setColor = function (color) {
+        this.color = color;
     }
 
     PixelCanvas.prototype.onMouseDown = function (event) {
-        (this.auxTool || this.curTool).onMouseDown(event);
+        this.curTool.onMouseDown(event);
     }
 
     PixelCanvas.prototype.onMouseUp = function (event) {
-        (this.auxTool || this.curTool).onMouseUp(event);
+        this.curTool.onMouseUp(event);
     }
 
     PixelCanvas.prototype.onMouseMove = function (event) {
-        (this.auxTool || this.curTool).onMouseMove(event);
+        this.curTool.onMouseMove(event);
     }
 
     PixelCanvas.prototype.onMouseOut = function (event) {
-        (this.auxTool || this.curTool).onMouseOut(event);
+        this.curTool.onMouseOut(event);
     }
     /* ==================  End of class ================ */
 
@@ -175,6 +178,10 @@ $(document).ready(function() {
           } else {
             this.$grid_cnvs.hide();
           }
+        }, this));
+
+        $('.tool').click($.proxy(function (event) {
+            this.pixelCanvas.setTool(event.target.id);
         }, this));
 
         // Mouse handlers
