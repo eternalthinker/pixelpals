@@ -12,8 +12,7 @@
 }*/
 
 div.colorPicker-picker {
-  border: 1px solid #000;
-  cursor: pointer;
+    border: 1px solid #000;
 }
 
 div.colorPicker-palette {

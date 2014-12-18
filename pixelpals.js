@@ -237,6 +237,8 @@ $(document).ready(function() {
         this.setTool(this.curToolName);
         this.paintGrid();
         this.pixelCanvas = new PixelCanvas(this.h/this.pixelSize, this.w/this.pixelSize, this.pixelSize, this.pixel_ctx, this);
+        this.pixelCanvas.setColor('#FF4500');
+        this.setColor('#FF4500');
     }
 
     Ui.prototype.setTool = function (toolname) {
@@ -252,7 +254,7 @@ $(document).ready(function() {
 
     Ui.prototype.paintGrid = function () {
         this.grid_ctx.fillStyle = '#FFFFFF';
-        this.grid_ctx.strokeStyle = '#CCCCCC';
+        this.grid_ctx.strokeStyle = '#DCDCDC';
         this.grid_ctx.lineWidth = 0.5;
         /* Background color
         this.grid_ctx.beginPath();
