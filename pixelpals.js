@@ -46,6 +46,7 @@ $(document).ready(function() {
     /* ----------------------- Pencil -----------------------*/
     function Pencil (pixelCanvas) {
         Tool.call(this, pixelCanvas);
+        this.points = [];
     }
     Pencil.prototype = Object.create(Tool.prototype);
 
@@ -54,9 +55,18 @@ $(document).ready(function() {
             this.drawing = false;
             if (this.dragging) { // No mouse up action if mouse was being dragged
                 this.dragging = false;
+                this.pixelCanvas.ui.socket.emit('drawing', {
+                    color: this.pixelCanvas.color,
+                    points: this.points
+                });
+                this.points = [];
             }
             else {
                 this.pixelCanvas.setPixel(event.x, event.y);
+                this.pixelCanvas.ui.socket.emit('drawing', {
+                    color: this.pixelCanvas.color,
+                    points: [event]
+                });
             }
         }
     }
@@ -65,11 +75,8 @@ $(document).ready(function() {
         if (this.drawing) {
             this.dragging = true;
             this.pixelCanvas.setPixel(event.x, event.y);
+            this.points.push(event);
         }
-    }
-
-    Pencil.prototype.setColor = function (color) {
-        this.color = color;
     }
 
     /* ----------------------- Picker -----------------------*/
@@ -169,8 +176,10 @@ $(document).ready(function() {
     function Ui () {
         // Collect UI components
         this.$pixel_cnvs = $('#pixelcanvas');
+        this.$network_cnvs = $('#networkcanvas');
         this.$grid_cnvs = $('#grid');
         this.pixel_ctx = this.$pixel_cnvs.get(0).getContext('2d');
+        this.network_ctx = this.$network_cnvs.get(0).getContext('2d');
         this.grid_ctx = this.$grid_cnvs.get(0).getContext('2d');
         this.$grid_chk = $('#grid-switch');
         this.$colorpicker_ui = $('#colorpicker');
@@ -232,13 +241,29 @@ $(document).ready(function() {
         this.pixelSize = 5;
         this.curToolName = 'pencil';
 
+        // Networking
+        var url = 'http://localhost:8080'; // The URL of your web server (the port is set in app.js)
+        this.socket = io.connect(url);
+        this.socket.on('drawing', $.proxy(this.networkDraw, this));
+
         // Actions
         $('#picker').prop('disabled', false);
         this.setTool(this.curToolName);
         this.paintGrid();
         this.pixelCanvas = new PixelCanvas(this.h/this.pixelSize, this.w/this.pixelSize, this.pixelSize, this.pixel_ctx, this);
+        this.networkCanvas = new PixelCanvas(this.h/this.pixelSize, this.w/this.pixelSize, this.pixelSize, this.network_ctx, this);
         this.pixelCanvas.setColor('#FF4500');
         this.setColor('#FF4500');
+    }
+
+    // In multi-tool implementation, this logic should be moved to each tool
+    Ui.prototype.networkDraw = function (data) {
+        console.log("Drawing event");
+        this.networkCanvas.setColor(data.color);
+        for (var i = 0; i < data.points.length; ++i) {
+            var point = data.points[i];
+            this.networkCanvas.setPixel(point.x, point.y);
+        }
     }
 
     Ui.prototype.setTool = function (toolname) {
