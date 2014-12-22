@@ -258,8 +258,8 @@ $(document).ready(function() {
         this.pixelSize = 5;
 
         // Networking
-        var url = 'http://localhost:8080'; // The URL of your web server (the port is set in server.js)
-        this.socket = io.connect(url);
+        //var url = 'http://localhost:8080'; // The URL of your web server (the port is set in server.js)
+        this.socket = io.connect();
 
         // Drawing
         this.pixelCanvas = new PixelCanvas(this.w, this.h, this.pixelSize, this.$pixel_cnvs.get(0), this); // buffer canvas
