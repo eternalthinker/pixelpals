@@ -22,14 +22,41 @@ function handler (request, response) {
 // Delete this row if you want to see debug messages
 //io.set('log level', 1);
 
+var w = 750;
+var h = 600;
+var pixelSize = 5;
+global.rows = h / pixelSize;
+global.cols = w / pixelSize;
+global.canvasData = []; // Internal info storage for canvas pixels
+for (var r = 0; r < global.rows; ++r) {
+    for (var c = 0; c < global.cols; ++c) {
+        global.canvasData[r*global.cols + c] = '#FFFFFF';
+    }
+}
+
+function updateCanvas (data) {
+    var color = data.color;
+    for (var i = 0; i < data.points.length; ++i) {
+        var point = data.points[i];
+        global.canvasData[point.y*global.cols + point.x] = color;
+    }
+}
+
 // Listen for incoming connections from clients
 io.sockets.on('connection', function (socket) {
-    // Start listening for mouse move events
+    // Start listening for events
     socket.on('drawing', function (data) {
         // This line sends the event (broadcasts it)
         // to everyone except the originating client.
+        updateCanvas(data);
         socket.broadcast.emit('drawing', data);
+    });
+
+    socket.on('init', function (data) {
+        // Send to originating client
+        socket.emit('init', global.canvasData);
     });
 });
 
 console.log("Server started...");
+//console.log(global.canvasData);
