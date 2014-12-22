@@ -1,0 +1,34 @@
+{
+  "name": "pixelpals",
+  "version": "1.0.0",
+  "description": "Web based collaborative pixel canvas",
+  "main": "server.js",
+  "dependencies": {
+    "socket.io": "1.2.x",
+    "node-static": "0.7.x"
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eternalthinker/pixelpals.git"
+  },
+  "keywords": [
+    "nodejs",
+    "pixel",
+    "art",
+    "collaborative",
+    "canvas"
+  ],
+  "author": "Rahul Anand",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/eternalthinker/pixelpals/issues"
+  },
+  "homepage": "https://github.com/eternalthinker/pixelpals"
+}
