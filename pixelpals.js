@@ -50,8 +50,24 @@ $(document).ready(function() {
         this.canvasCtx.fill();
     }
 
+    PixelCanvas.prototype.setNetworkPixel = function (x, y) {
+        this.setPixel(x, y);
+        this.ui.socket.child(y*this.cols + x).set(this.color);
+    }
+
+    PixelCanvas.prototype.setDataPixel = function (key, color) {
+        this.setColor(color);
+        var x = key % this.cols;
+        var y = key / this.cols;
+        this.setPixel(x, y);
+    }
+
     PixelCanvas.prototype.getPixel = function (x, y) {
         return this.canvasData[y*this.cols + x];
+    }
+
+    PixelCanvas.prototype.getCanvas = function () {
+        return this.canvasData;
     }
 
     PixelCanvas.prototype.setColor = function (color) {
@@ -78,7 +94,6 @@ $(document).ready(function() {
     function Tool (ui) {
         this.ui = ui;
         this.pixelCanvas = ui.pixelCanvas;
-        this.socket = ui.socket;
         this.drawing = false;
         this.dragging = false;
         this.name = "generic_tool";
@@ -116,24 +131,8 @@ $(document).ready(function() {
     function Pencil (ui) {
         Tool.call(this, ui);
         this.name = "pencil";
-        this.points = [];
-        this.lastEmit = $.now();
     }
     Pencil.prototype = Object.create(Tool.prototype);
-
-    Pencil.prototype.networkEmit = function () {
-        if (! this.points.length) {
-            return;
-        }
-        var data = {
-            color: this.pixelCanvas.color,
-            points: this.points
-        };
-        this.socket.emit('drawing', data);
-        this.ui.networkDraw(data); // Draw current chunk to final canvas
-        this.points = [];
-        this.lastEmit = $.now();
-    } 
 
     Pencil.prototype.onMouseUp = function (event) {
         if (this.drawing) {
@@ -143,10 +142,8 @@ $(document).ready(function() {
             }
             else {
                 var point = this.pixelCanvas.getPixelpoint(event);
-                this.pixelCanvas.setPixel(point.x, point.y);
-                this.points.push(point);
+                this.pixelCanvas.setNetworkPixel(point.x, point.y);
             }
-            this.networkEmit();
             this.pixelCanvas.clearUi(); // User's mouse is up, clear the buffer layer
         }
     }
@@ -155,11 +152,7 @@ $(document).ready(function() {
         if (this.drawing) {
             this.dragging = true;
             var point = this.pixelCanvas.getPixelpoint(event);
-            this.pixelCanvas.setPixel(point.x, point.y);
-            this.points.push(point);
-            if ($.now() - this.lastEmit > 30) {
-                this.networkEmit();
-            }
+            this.pixelCanvas.setNetworkPixel(point.x, point.y);
         }
     }
 
@@ -167,7 +160,6 @@ $(document).ready(function() {
         if (this.dragging) {
             this.drawing = false;
             this.dragging = false;
-            this.networkEmit();
         }
     }
 
@@ -263,8 +255,8 @@ $(document).ready(function() {
         this.pixelSize = 5;
 
         // Networking
-        // var url = 'http://localhost:8080'; // The URL of your web server (the port is set in server.js)
-        this.socket = io.connect();
+        this.canvasId = canvasId_g || "public";
+        this.socket = new Firebase("https://pixelpals-server.firebaseio.com/" + this.canvasId);
 
         // Drawing
         this.pixelCanvas = new PixelCanvas(this.w, this.h, this.pixelSize, this.$pixel_cnvs.get(0), this); // buffer canvas
@@ -276,27 +268,24 @@ $(document).ready(function() {
         this.curTool = this.tools.pencil;
         this.curToolName = 'pencil';
 
-        this.socket.on('drawing', $.proxy(this.networkDraw, this));
-        this.socket.on('init', $.proxy(this.networkCanvas.load, this.networkCanvas));
+        this.socket.once('value', $.proxy(function(canvasSnapshot) {
+            var canvasData = canvasSnapshot.val();
+            if (canvasData) {
+                this.networkCanvas.load(canvasData);
+            } else {
+                this.socket.set(this.networkCanvas.getCanvas());
+            }
+        }, this));
+        this.socket.on('child_changed', $.proxy(function (pixelSnapshot) {
+            this.networkCanvas.setDataPixel(pixelSnapshot.key(), pixelSnapshot.val());
+        }, this));
 
         // Actions
-        //$('#picker').prop('disabled', false);
         $('#picker').removeClass('active');
         this.setTool(this.curToolName);
         this.paintGrid();
         this.pixelCanvas.setColor('#FF4500');
         this.setColorUi('#FF4500');
-        this.socket.emit('init');
-    }
-
-    // In multi-tool implementation, this logic shall be moved to each tool
-    // Eg:- this.tools[data.toolname].networkDraw(data)
-    Ui.prototype.networkDraw = function (data) {
-        this.networkCanvas.setColor(data.color);
-        for (var i = 0; i < data.points.length; ++i) {
-            var point = data.points[i];
-            this.networkCanvas.setPixel(point.x, point.y);
-        }
     }
 
     Ui.prototype.setTool = function (toolname) {
@@ -382,6 +371,14 @@ $(document).ready(function() {
         return {x:canvasX, y:canvasY};
     }
     HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
+
+    function getURLParameter(name) {
+        var val = decodeURI(
+            (RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]
+            );
+        return (val === "null")? null: val;
+    }
+    canvasId_g = getURLParameter('canvasid');
     /* ================== End of Utilities ================ */
 
     var ui = new Ui();
