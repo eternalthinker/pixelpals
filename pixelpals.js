@@ -289,11 +289,16 @@ $(document).ready(function() {
     }
 
     Ui.prototype.setTool = function (toolname) {
-        //$('#' + this.curTool.name).prop('disabled', false);
+        if (toolname === "picker") {
+            this.$grid_cnvs.css('cursor', 'pointer');
+            this.$pixel_cnvs.css('cursor', 'pointer');
+        } else {
+            this.$grid_cnvs.css('cursor', 'default');
+            this.$pixel_cnvs.css('cursor', 'default');
+        }
         $('#' + this.curTool.name).removeClass('active');
         $('#' + this.curTool.name).addClass('btn-primary');
         this.curTool = this.tools[toolname];
-        //$('#' + this.curTool.name).prop('disabled', true);
         $('#' + this.curTool.name).addClass('active');
         $('#' + this.curTool.name).removeClass('btn-primary');
     };
