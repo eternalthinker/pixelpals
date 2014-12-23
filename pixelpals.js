@@ -58,7 +58,7 @@ $(document).ready(function() {
     PixelCanvas.prototype.setDataPixel = function (key, color) {
         this.setColor(color);
         var x = key % this.cols;
-        var y = key / this.cols;
+        var y = Math.floor(key / this.cols);
         this.setPixel(x, y);
     }
 
