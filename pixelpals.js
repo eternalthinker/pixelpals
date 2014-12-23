@@ -275,6 +275,7 @@ $(document).ready(function() {
             } else {
                 this.socket.set(this.networkCanvas.getCanvas());
             }
+            $('#notice').hide();
         }, this));
         this.socket.on('child_changed', $.proxy(function (pixelSnapshot) {
             this.networkCanvas.setDataPixel(pixelSnapshot.key(), pixelSnapshot.val());
