@@ -214,7 +214,9 @@ $(document).ready(function() {
 
         $('.tool').click($.proxy(function (event) {
             var toolname = event.currentTarget.id;
-            this.setTool(toolname);
+            if (toolname !== this.curTool.name) {
+                this.setTool(toolname);
+            }
         }, this));
 
         this.$colorpicker_ui.colorPicker({
@@ -240,7 +242,7 @@ $(document).ready(function() {
                     "DCDCDC", "D3D3D3", "C0C0C0", "A9A9A9", "808080", "696969", "778899", "708090", "2F4F4F", "000000" 
                     ]
         });
-        $('.colorPicker-picker').addClass('btn btn-default');
+        $('.colorPicker-picker').addClass('btn btn-default btn-embossed');
 
         // Mouse handlers
         this.$grid_cnvs.mousedown($.proxy(function (event) { this.onMouseDown(event); }, this));
@@ -258,7 +260,7 @@ $(document).ready(function() {
         this.pixelSize = 5;
 
         // Networking
-        //var url = 'http://localhost:8080'; // The URL of your web server (the port is set in server.js)
+        // var url = 'http://localhost:8080'; // The URL of your web server (the port is set in server.js)
         this.socket = io.connect();
 
         // Drawing
@@ -275,7 +277,8 @@ $(document).ready(function() {
         this.socket.on('init', $.proxy(this.networkCanvas.load, this.networkCanvas));
 
         // Actions
-        $('#picker').prop('disabled', false);
+        //$('#picker').prop('disabled', false);
+        $('#picker').removeClass('active');
         this.setTool(this.curToolName);
         this.paintGrid();
         this.pixelCanvas.setColor('#FF4500');
@@ -294,9 +297,13 @@ $(document).ready(function() {
     }
 
     Ui.prototype.setTool = function (toolname) {
-        $('#' + this.curTool.name).prop('disabled', false);
+        //$('#' + this.curTool.name).prop('disabled', false);
+        $('#' + this.curTool.name).removeClass('active');
+        $('#' + this.curTool.name).addClass('btn-primary');
         this.curTool = this.tools[toolname];
-        $('#' + this.curTool.name).prop('disabled', true);
+        //$('#' + this.curTool.name).prop('disabled', true);
+        $('#' + this.curTool.name).addClass('active');
+        $('#' + this.curTool.name).removeClass('btn-primary');
     };
 
     Ui.prototype.setColorUi = function (color) {

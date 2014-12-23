@@ -1,7 +1,7 @@
-
 body { 
     padding-top: 70px; 
     min-width: 768px;
+    font-family: 'VT323','Lato',Helvetica,Arial,sans-serif;
 }
 
 /* Fix for ghost bootstrapSwitch in Flat UI in Chrome (weird) */

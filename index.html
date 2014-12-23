@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/colorPicker.css">
     <link rel="stylesheet" href="css/flat-ui.min.css">
+    <link rel="stylesheet" href="css/tool-icons.css">
+    <link rel='stylesheet' href='http://fonts.googleapis.com/css?family=VT323' type='text/css'>
     <link rel="stylesheet" href="css/style.css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -33,7 +35,15 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-default navbar-fixed-top" role="navigation" id="main-navigation">
+  <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&appId=316657775101192&version=v2.0";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+  <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation" id="main-navigation">
     <div class="container-fluid">
       <div class="navbar-header">
         <a class="navbar-brand" href="#">PixelPals</a>
@@ -78,9 +88,9 @@
       <div class="text-left col-lg-4 col-lg-offset-0 col-md-6 col-md-offset-3 col-xs-8 col-xs-offset-2">
         <div class="row">
           <div class="col-xs-12" style="margin-top:10px;">
-            <button type="button" id="pencil" class="tool btn btn-default btn-inverse"><span class="fui-new"></span></button>
+            <button type="button" id="pencil" class="tool btn btn-default btn-primary btn-embossed"><span class="icon-pencil"></span></button>
             <input id="colorpicker" type="text" name="colorpicker" value="#000000"></input>
-            <button type="button" id="picker" class="tool btn btn-default btn-inverse mll"><span class="fui-eye"></span></button>
+            <button type="button" id="picker" class="tool btn btn-default btn-primary btn-embossed mll"><span class="icon-picker"></span></button>
             <hr/>
           </div>
         </div>
@@ -103,7 +113,9 @@
         <section>
           <h3>About</h3>
           <p>
-            <em>PixelPals</em> is a collaborative public pixel canvas 
+            <em>PixelPals</em> is a public pixel canvas. You can see updates from others in real time. Just draw on! :)<br>
+            Implementation: Raw HTML5 Canvas, Node.js
+            <div class="fb-like" data-href="https://pixelpals.herokuapp.com/" data-layout="button_count" data-action="like" data-show-faces="false" data-share="false"></div>
           </p>
         </section>
 
@@ -111,7 +123,11 @@
       </div>
     </div>
 
-    <div class="row" style="margin-top:40px"></div>
+    <div class="row" style="margin-top:40px">
+        <div class="col-lg-12">
+            <p class="text-center"><small><a href="http://eternal-thinker.com/">&lt;eternalthinker&gt;</a></small></p>
+        </div>
+    </div>
     </div> <!-- END main container -->
 
 </body>  
