@@ -122,6 +122,9 @@ $(document).ready(function() {
     Pencil.prototype = Object.create(Tool.prototype);
 
     Pencil.prototype.networkEmit = function () {
+        if (! this.points.length) {
+            return;
+        }
         var data = {
             color: this.pixelCanvas.color,
             points: this.points
