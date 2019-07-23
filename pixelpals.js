@@ -256,7 +256,7 @@ $(document).ready(function() {
 
         // Networking
         this.canvasId = canvasId_g || "public";
-        this.socket = new Firebase("https://pixelpals-server.firebaseio.com/" + this.canvasId);
+        this.socket = new Firebase("https://pixelpals-83a2d.firebaseio.com/" + this.canvasId);
 
         // Drawing
         this.pixelCanvas = new PixelCanvas(this.w, this.h, this.pixelSize, this.$pixel_cnvs.get(0), this); // buffer canvas
